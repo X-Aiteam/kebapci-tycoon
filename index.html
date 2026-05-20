@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kebapçı Tycoon</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #2c3e50; color: white; padding: 20px; }
+        .box { background: #34495e; padding: 20px; border-radius: 10px; display: inline-block; }
+        button { padding: 15px 30px; font-size: 18px; margin: 10px; cursor: pointer; border: none; border-radius: 5px; }
+        .cook { background: #e67e22; color: white; }
+        .hire { background: #27ae60; color: white; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Kebapçı Tycoon</h1>
+        <h2 id="money">Para: 0 TL</h2>
+        <p id="kebabs">Kebap: 0</p>
+        <button class="cook" onclick="cookKebab()">Kebap Çevir 🍢</button>
+        <button class="hire" onclick="hireWorker()">Usta Tut (50 TL)</button>
+    </div>
+
+    <script>
+        let money = 0;
+        let kebabs = 0;
+        let workerCost = 50;
+
+        function cookKebab() {
+            kebabs++;
+            money += 10;
+            updateUI();
+        }
+
+        function hireWorker() {
+            if (money >= workerCost) {
+                money -= workerCost;
+                setInterval(cookKebab, 2000); // Her 2 saniyede 1 kebap
+                workerCost += 50;
+                document.querySelector('.hire').innerText = "Usta Tut (" + workerCost + " TL)";
+                updateUI();
+            } else {
+                alert("Para yetmiyor kirve!");
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('money').innerText = "Para: " + money + " TL";
+            document.getElementById('kebabs').innerText = "Kebap: " + kebabs;
+        }
+    </script>
+</body>
+</html>
