@@ -1,95 +1,125 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Frontier | Pro Engine</title>
-    <link rel="stylesheet" href="css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Frontier Engine</title>
+    <style>
+        /* CSS Core Styles */
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+        #game-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        canvas { display: block; }
+        .menu-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; pointer-events: all; }
+        button { padding: 20px 40px; font-size: 24px; cursor: pointer; background: #ff4500; border: none; color: white; margin: 10px; transition: 0.3s; }
+        button:hover { background: #ff8c00; transform: scale(1.05); }
+    </style>
 </head>
 <body>
-    <div id="game-container">
-        <div id="main-menu" class="overlay">
-            <h1>NEON FRONTIER</h1>
-            <button onclick="Game.start()" data-sfx="click">BAŞLAT</button>
-            <button onclick="Game.openSettings()" data-sfx="click">AYARLAR</button>
-        </div>
-        <canvas id="gameCanvas"></canvas>
+
+<div id="game-ui">
+    <div id="menu" class="menu-overlay">
+        <h1>NEON FRONTIER</h1>
+        <button id="start-btn">START MISSION</button>
+        <button id="settings-btn">SETTINGS</button>
     </div>
-    <script src="js/core/audio.js"></script>
-    <script src="js/core/engine.js"></script>
-    <script src="js/game.js"></script>
-</body>
-</html>
-body { margin: 0; background: #000; color: #fff; overflow: hidden; font-family: 'Arial', sans-serif; }
-#game-container { position: relative; width: 100vw; height: 100vh; }
-canvas { display: block; }
-.overlay { position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:10; }
-button { padding: 15px 30px; font-size: 20px; background: #ff4500; border: none; color: #fff; cursor: pointer; margin: 10px; transition: 0.3s; }
-button:hover { background: #ff6a00; transform: scale(1.1); }
-const AudioManager = {
-    sounds: {
-        click: new Audio('assets/click.mp3'),
-        bgm: new Audio('assets/bgm.mp3')
-    },
-    play(id) {
-        if(this.sounds[id]) {
-            this.sounds[id].currentTime = 0;
-            this.sounds[id].play().catch(e => console.log("Ses çalınamadı (etkileşim gerekli)."));
-        }
-    }
-};
-const GameEngine = {
-    isRunning: false,
-    lastTime: 0,
-    
-    init() {
-        requestAnimationFrame(this.update.bind(this));
-    },
+</div>
+<canvas id="gameCanvas"></canvas>
 
-    update(timestamp) {
-        if(!this.isRunning) return;
-        let deltaTime = timestamp - this.lastTime;
-        this.lastTime = timestamp;
+<script>
+/**
+ * ENGINE: NEON FRONTIER CORE
+ * VERSION: 1.0.0
+ * ARCHITECTURE: MODULE-BASED CLASS SYSTEM
+ */
 
-        // Oyunun fizik ve mantık hesaplamaları burada yapılır
-        Game.logic(deltaTime);
-        Game.render();
-
-        requestAnimationFrame(this.update.bind(this));
-    }
-};
-const Game = {
-    canvas: document.getElementById('gameCanvas'),
-    ctx: null,
-    score: 0,
-
-    start() {
+class GameEngine {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
+        this.resize();
+        this.entities = [];
+        this.player = new Player(this.canvas.width/2, this.canvas.height/2);
+        this.isRunning = false;
+        this.score = 0;
+        
+        window.addEventListener('resize', () => this.resize());
+        this.initControls();
+    }
+
+    resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-        document.getElementById('main-menu').style.display = 'none';
-        
-        GameEngine.isRunning = true;
-        GameEngine.init();
-    },
+    }
 
-    logic(dt) {
-        // Burada yüz binlerce satıra çıkacak olan düşman yapay zekası,
-        // çarpışma (collision) algoritmaları ve fizik hesapları yer alacak.
-        this.score += 0.01; 
-    },
+    initControls() {
+        this.keys = {};
+        window.addEventListener('keydown', e => this.keys[e.code] = true);
+        window.addEventListener('keyup', e => this.keys[e.code] = false);
+    }
+
+    update() {
+        if (!this.isRunning) return;
+        
+        // Update entities
+        this.player.update(this.keys);
+        this.entities.forEach(e => e.update());
+        
+        // Simple Enemy Spawner
+        if(Math.random() < 0.02) this.entities.push(new Enemy(Math.random() * this.canvas.width, 0));
+        
+        this.render();
+        requestAnimationFrame(() => this.update());
+    }
 
     render() {
-        this.ctx.fillStyle = 'black';
+        this.ctx.fillStyle = 'rgba(0,0,0,0.2)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.fillStyle = 'white';
-        this.ctx.font = '20px Arial';
-        this.ctx.fillText(`Puan: ${Math.floor(this.score)}`, 20, 30);
+        this.player.draw(this.ctx);
+        this.entities.forEach(e => e.draw(this.ctx));
+        
+        // Draw HUD
+        this.ctx.fillStyle = '#fff';
+        this.ctx.fillText("SCORE: " + Math.floor(this.score++ / 10), 20, 30);
     }
-};
+}
 
-// Buton ses etkileşimi
-document.querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', () => AudioManager.play('click'));
+class Player {
+    constructor(x, y) {
+        this.x = x; this.y = y; this.speed = 5;
+    }
+    update(keys) {
+        if (keys['ArrowUp']) this.y -= this.speed;
+        if (keys['ArrowDown']) this.y += this.speed;
+        if (keys['ArrowLeft']) this.x -= this.speed;
+        if (keys['ArrowRight']) this.x += this.speed;
+    }
+    draw(ctx) {
+        ctx.fillStyle = '#00ff41';
+        ctx.fillRect(this.x, this.y, 30, 30);
+    }
+}
+
+class Enemy {
+    constructor(x, y) {
+        this.x = x; this.y = y;
+    }
+    update() {
+        this.y += 2;
+    }
+    draw(ctx) {
+        ctx.fillStyle = '#ff4500';
+        ctx.fillRect(this.x, this.y, 20, 20);
+    }
+}
+
+// Initialization Logic
+const engine = new GameEngine();
+
+document.getElementById('start-btn').addEventListener('click', () => {
+    document.getElementById('menu').style.display = 'none';
+    engine.isRunning = true;
+    engine.update();
 });
-
+</script>
+</body>
+</html>
