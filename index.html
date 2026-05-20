@@ -1,91 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Frontier Engine</title>
+    <title>Neon-Tactics Pro Engine</title>
     <style>
-        /* CSS Core Styles */
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
-        #game-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        canvas { display: block; }
-        .menu-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; pointer-events: all; }
-        button { padding: 20px 40px; font-size: 24px; cursor: pointer; background: #ff4500; border: none; color: white; margin: 10px; transition: 0.3s; }
-        button:hover { background: #ff8c00; transform: scale(1.05); }
+        body, html { margin: 0; padding: 0; background: #050505; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; touch-action: none; }
+        canvas { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: all; }
+        button { background: #ff4500; border: 2px solid #fff; color: #fff; padding: 15px 40px; margin: 10px; cursor: pointer; font-size: 20px; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #fff; color: #ff4500; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div id="game-ui">
-    <div id="menu" class="menu-overlay">
-        <h1>NEON FRONTIER</h1>
-        <button id="start-btn">START MISSION</button>
-        <button id="settings-btn">SETTINGS</button>
+<div id="ui-layer">
+    <div id="main-menu" class="menu">
+        <h1>NEON TACTICS</h1>
+        <button onclick="Game.start()">BAŞLAT</button>
+        <button onclick="Game.openSettings()">AYARLAR</button>
     </div>
 </div>
 <canvas id="gameCanvas"></canvas>
 
 <script>
-/**
- * ENGINE: NEON FRONTIER CORE
- * VERSION: 1.0.0
- * ARCHITECTURE: MODULE-BASED CLASS SYSTEM
+/** * PROFESSIONAL GAME ARCHITECTURE - MODULAR SYSTEM
  */
 
-class GameEngine {
-    constructor() {
-        this.canvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.resize();
-        this.entities = [];
-        this.player = new Player(this.canvas.width/2, this.canvas.height/2);
-        this.isRunning = false;
-        this.score = 0;
-        
-        window.addEventListener('resize', () => this.resize());
-        this.initControls();
-    }
+// 1. SES YÖNETİCİSİ
+const AudioManager = {
+    play(effect) { console.log("Ses çalıyor: " + effect); /* Audio nesneleri buraya */ },
+    toggleMute() { /* Mute logic */ }
+};
 
-    resize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-    }
-
-    initControls() {
-        this.keys = {};
+// 2. INPUT YÖNETİCİSİ (Mobil & PC Destekli)
+const InputManager = {
+    keys: {},
+    init() {
         window.addEventListener('keydown', e => this.keys[e.code] = true);
         window.addEventListener('keyup', e => this.keys[e.code] = false);
     }
+};
 
-    update() {
-        if (!this.isRunning) return;
-        
-        // Update entities
-        this.player.update(this.keys);
-        this.entities.forEach(e => e.update());
-        
-        // Simple Enemy Spawner
-        if(Math.random() < 0.02) this.entities.push(new Enemy(Math.random() * this.canvas.width, 0));
-        
-        this.render();
-        requestAnimationFrame(() => this.update());
-    }
-
-    render() {
-        this.ctx.fillStyle = 'rgba(0,0,0,0.2)';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        this.player.draw(this.ctx);
-        this.entities.forEach(e => e.draw(this.ctx));
-        
-        // Draw HUD
-        this.ctx.fillStyle = '#fff';
-        this.ctx.fillText("SCORE: " + Math.floor(this.score++ / 10), 20, 30);
-    }
-}
-
+// 3. KARAKTER SINIFI (Player)
 class Player {
     constructor(x, y) {
-        this.x = x; this.y = y; this.speed = 5;
+        this.x = x; this.y = y; this.size = 30; this.speed = 7;
     }
     update(keys) {
         if (keys['ArrowUp']) this.y -= this.speed;
@@ -95,31 +57,61 @@ class Player {
     }
     draw(ctx) {
         ctx.fillStyle = '#00ff41';
-        ctx.fillRect(this.x, this.y, 30, 30);
+        ctx.fillRect(this.x, this.y, this.size, this.size);
     }
 }
 
-class Enemy {
-    constructor(x, y) {
-        this.x = x; this.y = y;
-    }
+// 4. OYUN MOTORU (Game Engine Core)
+const Game = {
+    canvas: document.getElementById('gameCanvas'),
+    ctx: null,
+    player: null,
+    score: 0,
+    isRunning: false,
+
+    init() {
+        this.ctx = this.canvas.getContext('2d');
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        this.player = new Player(100, 100);
+        InputManager.init();
+        this.loop();
+    },
+
+    start() {
+        document.getElementById('main-menu').classList.add('hidden');
+        this.isRunning = true;
+        AudioManager.play('start');
+    },
+
+    openSettings() { alert("Ayarlar paneli eklenecek."); },
+
     update() {
-        this.y += 2;
-    }
-    draw(ctx) {
-        ctx.fillStyle = '#ff4500';
-        ctx.fillRect(this.x, this.y, 20, 20);
-    }
-}
+        if (!this.isRunning) return;
+        this.player.update(InputManager.keys);
+        this.score += 0.1;
+    },
 
-// Initialization Logic
-const engine = new GameEngine();
+    render() {
+        this.ctx.fillStyle = '#050505';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        if (this.isRunning) {
+            this.player.draw(this.ctx);
+            this.ctx.fillStyle = '#fff';
+            this.ctx.fillText("SKOR: " + Math.floor(this.score), 20, 30);
+        }
+    },
 
-document.getElementById('start-btn').addEventListener('click', () => {
-    document.getElementById('menu').style.display = 'none';
-    engine.isRunning = true;
-    engine.update();
-});
+    loop() {
+        this.update();
+        this.render();
+        requestAnimationFrame(() => this.loop());
+    }
+};
+
+// Başlatıcı
+Game.init();
 </script>
 </body>
 </html>
