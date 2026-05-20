@@ -2,41 +2,39 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kebapçı Tycoon</title>
     <style>
         body { 
-            background: linear-gradient(135deg, #d35400, #c0392b); 
-            font-family: 'Segoe UI', sans-serif; 
-            text-align: center; 
-            color: white; 
-            padding-top: 50px; 
+            background: linear-gradient(180deg, #2c3e50 0%, #000000 100%); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; color: white; margin: 0; padding: 20px; 
+            min-height: 100vh; display: flex; flex-direction: column; align-items: center;
         }
-        .dukkan { 
-            background: rgba(0,0,0,0.4); 
-            padding: 30px; 
-            border-radius: 20px; 
-            display: inline-block; 
-            border: 2px solid #f1c40f; 
+        .container { 
+            background: #1a1a1a; padding: 30px; border-radius: 20px; 
+            border: 2px solid #e67e22; box-shadow: 0 0 20px rgba(230, 126, 34, 0.5);
+            max-width: 400px; width: 100%;
         }
+        h1 { color: #e67e22; margin-bottom: 20px; text-transform: uppercase; }
+        .stats { background: #333; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
         button { 
-            padding: 15px 30px; 
-            font-size: 20px; 
-            margin: 10px; 
-            cursor: pointer; 
-            border-radius: 50px; 
-            border: none; 
-            transition: transform 0.2s;
+            width: 100%; padding: 20px; font-size: 18px; margin: 10px 0; 
+            cursor: pointer; border: none; border-radius: 10px; font-weight: bold;
+            transition: all 0.2s ease;
         }
-        button:hover { transform: scale(1.1); }
-        .cook { background: #f1c40f; color: #333; font-weight: bold; }
+        .cook { background: #e67e22; color: white; }
+        .cook:active { transform: scale(0.95); background: #d35400; }
         .hire { background: #27ae60; color: white; }
     </style>
 </head>
 <body>
-    <div class="dukkan">
-        <h1>🍢 Kebapçı Tycoon</h1>
-        <h2 id="money">Para: 0 TL</h2>
-        <p id="kebabs">Toplam Kebap: 0</p>
+    <div class="container">
+        <h1>Kebapçı Tycoon</h1>
+        <div class="stats">
+            <h2 id="money">Para: 0 TL</h2>
+            <p id="kebabs">Toplam Kebap: 0</p>
+        </div>
         <button class="cook" onclick="cookKebab()">Kebap Çevir 🍢</button>
         <button class="hire" onclick="hireWorker()">Usta Tut (50 TL)</button>
     </div>
