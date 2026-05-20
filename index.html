@@ -3,165 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEON DOMINION: WAR & TYCOON</title>
+    <title>Kebapçı Tycoon - Ultimate Edition</title>
     <style>
-        body { margin: 0; background: #050505; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
-        #gameCanvas { cursor: crosshair; background: #0a0a0a; border-left: 2px solid #333; border-right: 2px solid #333; }
-        .ui-layer { position: absolute; top: 10px; left: 10px; pointer-events: none; width: 300px; }
-        .hud { background: rgba(0,0,0,0.8); padding: 15px; border: 1px solid #ff4500; border-radius: 10px; pointer-events: auto; }
-        .btn-box { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
-        button { background: #ff4500; color: white; border: none; padding: 8px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        button:hover { background: #ff6a00; }
-        .stat-val { color: #00ff41; font-weight: bold; }
+        :root { --neon: #ff4500; --bg: #0a0a0a; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { width: 400px; background: #1a1a1a; padding: 20px; border-radius: 20px; border: 2px solid var(--neon); box-shadow: 0 0 20px var(--neon); text-align: center; }
+        
+        #kebab-btn { width: 200px; height: 200px; border-radius: 50%; background: var(--neon); border: none; font-size: 50px; cursor: pointer; transition: 0.2s; box-shadow: 0 0 15px var(--neon); }
+        #kebab-btn:active { transform: scale(0.95); background: #cc3700; }
+        
+        .stats { margin: 20px 0; font-size: 1.2em; }
+        .shop { display: grid; gap: 10px; margin-top: 20px; }
+        button.upgrade { background: #333; color: white; border: 1px solid #555; padding: 10px; cursor: pointer; border-radius: 5px; transition: 0.3s; }
+        button.upgrade:hover { background: var(--neon); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        #progress-bar { width: 100%; height: 10px; background: #333; margin-top: 10px; border-radius: 5px; overflow: hidden; }
+        #progress-fill { height: 100%; background: var(--neon); width: 0%; transition: 0.3s; }
     </style>
 </head>
 <body>
 
-<div class="ui-layer">
-    <div class="hud">
-        <h2 style="margin:0; color:#ff4500;">NEON DOMINION</h2>
-        <div>Para: <span id="money" class="stat-val">0</span> TL</div>
-        <div>Ordu Gücü: <span id="army" class="stat-val">0</span></div>
-        <div class="btn-box">
-            <button onclick="upgradeBarracks()">Kışla Bas (150 TL)</button>
-            <button onclick="upgradeTax()">Vergi Ofisi (250 TL)</button>
-            <button onclick="saveGame()">Oyunu Kaydet</button>
-        </div>
-        <p id="msg" style="font-size: 12px; margin-top:10px; color:#aaa;">Sisteme hoş geldin, Komutan.</p>
+<div class="container">
+    <h1>🔥 KEBAPÇI TYCOON</h1>
+    <div class="stats">
+        <div>Para: <span id="money">0</span> TL</div>
+        <div>Kazanç: <span id="eps">0</span> TL/sn</div>
+    </div>
+
+    <button id="kebab-btn">🍢</button>
+    <div id="progress-bar"><div id="progress-fill"></div></div>
+
+    <div class="shop" id="shop"></div>
+    
+    <div style="margin-top: 20px;">
+        <button onclick="toggleMusic()">🎵 Müzik (Aç/Kapat)</button>
     </div>
 </div>
 
-<canvas id="gameCanvas"></canvas>
+<audio id="bg-music" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+</audio>
 
 <script>
-/**
- * NEON DOMINION ENGINE
- * V1.0.0 - PRO PRODUCTION BUILD
- */
+    let state = {
+        money: 0,
+        clickValue: 1,
+        eps: 0,
+        upgrades: [
+            { id: 'usta', name: 'Çırak Usta', cost: 15, income: 0.5, count: 0 },
+            { id: 'ocak', name: 'Sanayi Ocağı', cost: 100, income: 3, count: 0 },
+            { id: 'sube', name: 'Yeni Şube', cost: 500, income: 15, count: 0 }
+        ]
+    };
 
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+    const moneyEl = document.getElementById('money');
+    const epsEl = document.getElementById('eps');
+    const shopEl = document.getElementById('shop');
+    const music = document.getElementById('bg-music');
 
-let gameState = {
-    money: 0,
-    armyLevel: 1,
-    taxLevel: 1,
-    selectedState: null,
-    states: [
-        { id: 0, x: 200, y: 200, owner: 'player', troops: 20, income: 1 },
-        { id: 1, x: 500, y: 200, owner: 'neutral', troops: 10, income: 0.5 },
-        { id: 2, x: 350, y: 400, owner: 'enemy', troops: 30, income: 1.2 },
-        { id: 3, x: 600, y: 500, owner: 'neutral', troops: 5, income: 0.5 },
-        { id: 4, x: 150, y: 500, owner: 'enemy', troops: 25, income: 1.2 }
-    ]
-};
-
-// Initialization
-function init() {
-    const saved = localStorage.getItem('nd_save');
-    if(saved) gameState = JSON.parse(saved);
-    loop();
-}
-
-function saveGame() {
-    localStorage.setItem('nd_save', JSON.stringify(gameState));
-    document.getElementById('msg').innerText = "Oyun kaydedildi!";
-}
-
-function upgradeBarracks() {
-    if(gameState.money >= 150) {
-        gameState.money -= 150;
-        gameState.armyLevel += 0.25;
-        document.getElementById('msg').innerText = "Kışla verimliliği arttı!";
-    }
-}
-
-function upgradeTax() {
-    if(gameState.money >= 250) {
-        gameState.money -= 250;
-        gameState.taxLevel += 0.5;
-        document.getElementById('msg').innerText = "Vergi sistemi optimize edildi.";
-    }
-}
-
-// Game Loop (60 FPS)
-function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-}
-
-function update() {
-    gameState.states.forEach(s => {
-        if(s.owner === 'player') {
-            s.troops += (0.05 * gameState.armyLevel);
-            gameState.money += (0.01 * gameState.taxLevel);
-        } else if(s.owner === 'enemy') {
-            s.troops += 0.02;
-        }
-    });
-
-    // Simple AI
-    if(Math.random() < 0.01) {
-        let enemy = gameState.states.find(s => s.owner === 'enemy' && s.troops > 40);
-        if(enemy) {
-            let target = gameState.states.find(s => s.owner !== 'enemy');
-            if(target) {
-                target.owner = 'enemy';
-                target.troops = Math.floor(enemy.troops / 2);
-                enemy.troops = Math.floor(enemy.troops / 2);
-            }
-        }
-    }
-
-    document.getElementById('money').innerText = Math.floor(gameState.money);
-    document.getElementById('army').innerText = Math.floor(gameState.states.filter(s=>s.owner==='player').reduce((a,b)=>a+b.troops, 0));
-}
-
-function draw() {
-    ctx.clearRect(0,0, canvas.width, canvas.height);
-    
-    gameState.states.forEach(s => {
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, 40, 0, Math.PI*2);
-        ctx.fillStyle = (s.owner === 'player' ? '#2ecc71' : (s.owner === 'enemy' ? '#e74c3c' : '#7f8c8d'));
-        ctx.fill();
-        ctx.strokeStyle = (gameState.selectedState === s) ? '#fff' : '#000';
-        ctx.lineWidth = 5;
-        ctx.stroke();
+    function update() {
+        state.money += state.eps / 10;
+        moneyEl.innerText = Math.floor(state.money);
+        epsEl.innerText = state.eps.toFixed(1);
         
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.fillText(Math.floor(s.troops), s.x, s.y + 5);
-    });
-}
+        // Düğmeleri kontrol et
+        state.upgrades.forEach(u => {
+            document.getElementById(u.id).disabled = state.money < u.cost;
+        });
+        
+        localStorage.setItem('tycoonSave', JSON.stringify(state));
+    }
 
-// Input
-canvas.addEventListener('mousedown', e => {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    
-    gameState.states.forEach(s => {
-        if(Math.hypot(mx - s.x, my - s.y) < 40) {
-            if(gameState.selectedState && gameState.selectedState.owner === 'player' && s !== gameState.selectedState) {
-                // Attack logic
-                if(gameState.selectedState.troops > s.troops) {
-                    s.owner = 'player';
-                    s.troops = Math.floor(gameState.selectedState.troops / 2);
-                    gameState.selectedState.troops = Math.floor(gameState.selectedState.troops / 2);
-                }
-                gameState.selectedState = null;
-            } else if(s.owner === 'player') {
-                gameState.selectedState = s;
-            }
+    function buyUpgrade(id) {
+        let u = state.upgrades.find(x => x.id === id);
+        if (state.money >= u.cost) {
+            state.money -= u.cost;
+            u.count++;
+            u.cost = Math.floor(u.cost * 1.5);
+            state.eps += u.income;
+            renderShop();
         }
-    });
-});
+    }
 
-init();
+    function renderShop() {
+        shopEl.innerHTML = '';
+        state.upgrades.forEach(u => {
+            let btn = document.createElement('button');
+            btn.className = 'upgrade';
+            btn.id = u.id;
+            btn.innerHTML = `${u.name} (${u.cost} TL) <br> <small>Sahip: ${u.count}</small>`;
+            btn.onclick = () => buyUpgrade(u.id);
+            shopEl.appendChild(btn);
+        });
+    }
+
+    document.getElementById('kebab-btn').onclick = () => {
+        state.money += state.clickValue;
+        moneyEl.innerText = Math.floor(state.money);
+    };
+
+    function toggleMusic() {
+        music.paused ? music.play() : music.pause();
+    }
+
+    // Yükleme
+    const saved = localStorage.getItem('tycoonSave');
+    if (saved) {
+        state = JSON.parse(saved);
+        state.upgrades.forEach(u => state.eps += (u.count * u.income));
+    }
+
+    renderShop();
+    setInterval(update, 100);
 </script>
 </body>
 </html>
+
