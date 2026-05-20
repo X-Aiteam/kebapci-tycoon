@@ -2,101 +2,166 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>State Takeover - PRO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON DOMINION: WAR & TYCOON</title>
     <style>
-        body { margin: 0; background: #050505; color: white; font-family: sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
-        canvas { cursor: crosshair; background: #111; border: 2px solid #333; margin-top: 10px; }
-        .ui { position: absolute; top: 10px; left: 10px; pointer-events: none; }
+        body { margin: 0; background: #050505; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        #gameCanvas { cursor: crosshair; background: #0a0a0a; border-left: 2px solid #333; border-right: 2px solid #333; }
+        .ui-layer { position: absolute; top: 10px; left: 10px; pointer-events: none; width: 300px; }
+        .hud { background: rgba(0,0,0,0.8); padding: 15px; border: 1px solid #ff4500; border-radius: 10px; pointer-events: auto; }
+        .btn-box { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
+        button { background: #ff4500; color: white; border: none; padding: 8px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        button:hover { background: #ff6a00; }
+        .stat-val { color: #00ff41; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="ui">
-        <h1>STATE TAKEOVER</h1>
-        <p>Bölgeye tıkla (seç), sonra diğerine tıkla (saldır).</p>
+
+<div class="ui-layer">
+    <div class="hud">
+        <h2 style="margin:0; color:#ff4500;">NEON DOMINION</h2>
+        <div>Para: <span id="money" class="stat-val">0</span> TL</div>
+        <div>Ordu Gücü: <span id="army" class="stat-val">0</span></div>
+        <div class="btn-box">
+            <button onclick="upgradeBarracks()">Kışla Bas (150 TL)</button>
+            <button onclick="upgradeTax()">Vergi Ofisi (250 TL)</button>
+            <button onclick="saveGame()">Oyunu Kaydet</button>
+        </div>
+        <p id="msg" style="font-size: 12px; margin-top:10px; color:#aaa;">Sisteme hoş geldin, Komutan.</p>
     </div>
-    <canvas id="gameCanvas"></canvas>
+</div>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth * 0.9;
-        canvas.height = window.innerHeight * 0.8;
+<canvas id="gameCanvas"></canvas>
 
-        let selected = null;
-        const states = [
-            { x: 100, y: 100, troops: 20, owner: 'player', id: 0 },
-            { x: 300, y: 200, troops: 10, owner: 'neutral', id: 1 },
-            { x: 500, y: 100, troops: 30, owner: 'enemy', id: 2 },
-            { x: 200, y: 400, troops: 15, owner: 'neutral', id: 3 },
-            { x: 400, y: 400, troops: 25, owner: 'enemy', id: 4 }
-        ];
+<script>
+/**
+ * NEON DOMINION ENGINE
+ * V1.0.0 - PRO PRODUCTION BUILD
+ */
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            states.forEach(s => {
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, 30, 0, Math.PI * 2);
-                ctx.fillStyle = (s.owner === 'player' ? '#2ecc71' : (s.owner === 'enemy' ? '#e74c3c' : '#7f8c8d'));
-                if (selected === s) ctx.strokeStyle = 'white'; else ctx.strokeStyle = 'transparent';
-                ctx.lineWidth = 5;
-                ctx.stroke();
-                ctx.fill();
-                ctx.fillStyle = 'white';
-                ctx.textAlign = 'center';
-                ctx.fillText(Math.floor(s.troops), s.x, s.y + 5);
-            });
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let gameState = {
+    money: 0,
+    armyLevel: 1,
+    taxLevel: 1,
+    selectedState: null,
+    states: [
+        { id: 0, x: 200, y: 200, owner: 'player', troops: 20, income: 1 },
+        { id: 1, x: 500, y: 200, owner: 'neutral', troops: 10, income: 0.5 },
+        { id: 2, x: 350, y: 400, owner: 'enemy', troops: 30, income: 1.2 },
+        { id: 3, x: 600, y: 500, owner: 'neutral', troops: 5, income: 0.5 },
+        { id: 4, x: 150, y: 500, owner: 'enemy', troops: 25, income: 1.2 }
+    ]
+};
+
+// Initialization
+function init() {
+    const saved = localStorage.getItem('nd_save');
+    if(saved) gameState = JSON.parse(saved);
+    loop();
+}
+
+function saveGame() {
+    localStorage.setItem('nd_save', JSON.stringify(gameState));
+    document.getElementById('msg').innerText = "Oyun kaydedildi!";
+}
+
+function upgradeBarracks() {
+    if(gameState.money >= 150) {
+        gameState.money -= 150;
+        gameState.armyLevel += 0.25;
+        document.getElementById('msg').innerText = "Kışla verimliliği arttı!";
+    }
+}
+
+function upgradeTax() {
+    if(gameState.money >= 250) {
+        gameState.money -= 250;
+        gameState.taxLevel += 0.5;
+        document.getElementById('msg').innerText = "Vergi sistemi optimize edildi.";
+    }
+}
+
+// Game Loop (60 FPS)
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+function update() {
+    gameState.states.forEach(s => {
+        if(s.owner === 'player') {
+            s.troops += (0.05 * gameState.armyLevel);
+            gameState.money += (0.01 * gameState.taxLevel);
+        } else if(s.owner === 'enemy') {
+            s.troops += 0.02;
         }
+    });
 
-        canvas.addEventListener('mousedown', e => {
-            const rect = canvas.getBoundingClientRect();
-            const mx = e.clientX - rect.left;
-            const my = e.clientY - rect.top;
-
-            states.forEach(s => {
-                const dist = Math.hypot(mx - s.x, my - s.y);
-                if (dist < 30) {
-                    if (selected && selected !== s && selected.owner === 'player') {
-                        // Saldırı mantığı
-                        if (selected.troops > s.troops) {
-                            s.owner = 'player';
-                            s.troops = Math.floor(selected.troops / 2);
-                            selected.troops = Math.floor(selected.troops / 2);
-                        } else {
-                            selected.troops = 1;
-                        }
-                        selected = null;
-                    } else if (s.owner === 'player') {
-                        selected = s;
-                    }
-                }
-            });
-            draw();
-        });
-
-        // Oyun Döngüsü
-        setInterval(() => {
-            states.forEach(s => {
-                if (s.owner !== 'neutral') s.troops += 0.2;
-            });
-            // Basit Yapay Zeka (Enemy atak)
-            if (Math.random() < 0.05) {
-                let enemies = states.filter(s => s.owner === 'enemy');
-                enemies.forEach(e => {
-                    if (e.troops > 20) {
-                        let target = states[Math.floor(Math.random() * states.length)];
-                        if (target.owner !== 'enemy') {
-                            if (e.troops > target.troops) {
-                                target.owner = 'enemy';
-                                target.troops = Math.floor(e.troops / 2);
-                                e.troops = Math.floor(e.troops / 2);
-                            }
-                        }
-                    }
-                });
+    // Simple AI
+    if(Math.random() < 0.01) {
+        let enemy = gameState.states.find(s => s.owner === 'enemy' && s.troops > 40);
+        if(enemy) {
+            let target = gameState.states.find(s => s.owner !== 'enemy');
+            if(target) {
+                target.owner = 'enemy';
+                target.troops = Math.floor(enemy.troops / 2);
+                enemy.troops = Math.floor(enemy.troops / 2);
             }
-            draw();
-        }, 100);
-    </script>
+        }
+    }
+
+    document.getElementById('money').innerText = Math.floor(gameState.money);
+    document.getElementById('army').innerText = Math.floor(gameState.states.filter(s=>s.owner==='player').reduce((a,b)=>a+b.troops, 0));
+}
+
+function draw() {
+    ctx.clearRect(0,0, canvas.width, canvas.height);
+    
+    gameState.states.forEach(s => {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, 40, 0, Math.PI*2);
+        ctx.fillStyle = (s.owner === 'player' ? '#2ecc71' : (s.owner === 'enemy' ? '#e74c3c' : '#7f8c8d'));
+        ctx.fill();
+        ctx.strokeStyle = (gameState.selectedState === s) ? '#fff' : '#000';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+        
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.fillText(Math.floor(s.troops), s.x, s.y + 5);
+    });
+}
+
+// Input
+canvas.addEventListener('mousedown', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    
+    gameState.states.forEach(s => {
+        if(Math.hypot(mx - s.x, my - s.y) < 40) {
+            if(gameState.selectedState && gameState.selectedState.owner === 'player' && s !== gameState.selectedState) {
+                // Attack logic
+                if(gameState.selectedState.troops > s.troops) {
+                    s.owner = 'player';
+                    s.troops = Math.floor(gameState.selectedState.troops / 2);
+                    gameState.selectedState.troops = Math.floor(gameState.selectedState.troops / 2);
+                }
+                gameState.selectedState = null;
+            } else if(s.owner === 'player') {
+                gameState.selectedState = s;
+            }
+        }
+    });
+});
+
+init();
+</script>
 </body>
 </html>
