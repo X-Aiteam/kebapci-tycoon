@@ -1,122 +1,101 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kebapçı Tycoon - Ultimate Edition</title>
-    <style>
-        :root { --neon: #ff4500; --bg: #0a0a0a; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { width: 400px; background: #1a1a1a; padding: 20px; border-radius: 20px; border: 2px solid var(--neon); box-shadow: 0 0 20px var(--neon); text-align: center; }
-        
-        #kebab-btn { width: 200px; height: 200px; border-radius: 50%; background: var(--neon); border: none; font-size: 50px; cursor: pointer; transition: 0.2s; box-shadow: 0 0 15px var(--neon); }
-        #kebab-btn:active { transform: scale(0.95); background: #cc3700; }
-        
-        .stats { margin: 20px 0; font-size: 1.2em; }
-        .shop { display: grid; gap: 10px; margin-top: 20px; }
-        button.upgrade { background: #333; color: white; border: 1px solid #555; padding: 10px; cursor: pointer; border-radius: 5px; transition: 0.3s; }
-        button.upgrade:hover { background: var(--neon); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        #progress-bar { width: 100%; height: 10px; background: #333; margin-top: 10px; border-radius: 5px; overflow: hidden; }
-        #progress-fill { height: 100%; background: var(--neon); width: 0%; transition: 0.3s; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Web Oyun Demo</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      text-align: center;
+    }
+    #menu, #game {
+      display: none;
+    }
+    button {
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      background: #00ff88;
+      color: #000;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    button:hover {
+      transform: scale(1.1);
+    }
+    #score {
+      font-size: 24px;
+      margin-top: 20px;
+    }
+    canvas {
+      background: #222;
+      display: block;
+      margin: 20px auto;
+      border: 2px solid #00ff88;
+    }
+  </style>
 </head>
 <body>
+  <div id="menu">
+    <h1>🚀 Web Oyun</h1>
+    <button onclick="startGame()">Başlat</button>
+    <button onclick="playSound('click')">Ayarlar</button>
+    <button onclick="playSound('exit')">Çıkış</button>
+  </div>
 
-<div class="container">
-    <h1>🔥 KEBAPÇI TYCOON</h1>
-    <div class="stats">
-        <div>Para: <span id="money">0</span> TL</div>
-        <div>Kazanç: <span id="eps">0</span> TL/sn</div>
-    </div>
+  <div id="game">
+    <canvas id="canvas" width="400" height="400"></canvas>
+    <div id="score">Skor: 0</div>
+    <button onclick="endGame()">Menüye Dön</button>
+  </div>
 
-    <button id="kebab-btn">🍢</button>
-    <div id="progress-bar"><div id="progress-fill"></div></div>
+  <audio id="clickSound" src="click.mp3"></audio>
+  <audio id="exitSound" src="exit.mp3"></audio>
 
-    <div class="shop" id="shop"></div>
-    
-    <div style="margin-top: 20px;">
-        <button onclick="toggleMusic()">🎵 Müzik (Aç/Kapat)</button>
-    </div>
-</div>
+  <script>
+    let score = 0;
+    const menu = document.getElementById('menu');
+    const game = document.getElementById('game');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
 
-<audio id="bg-music" loop>
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-</audio>
-
-<script>
-    let state = {
-        money: 0,
-        clickValue: 1,
-        eps: 0,
-        upgrades: [
-            { id: 'usta', name: 'Çırak Usta', cost: 15, income: 0.5, count: 0 },
-            { id: 'ocak', name: 'Sanayi Ocağı', cost: 100, income: 3, count: 0 },
-            { id: 'sube', name: 'Yeni Şube', cost: 500, income: 15, count: 0 }
-        ]
-    };
-
-    const moneyEl = document.getElementById('money');
-    const epsEl = document.getElementById('eps');
-    const shopEl = document.getElementById('shop');
-    const music = document.getElementById('bg-music');
-
-    function update() {
-        state.money += state.eps / 10;
-        moneyEl.innerText = Math.floor(state.money);
-        epsEl.innerText = state.eps.toFixed(1);
-        
-        // Düğmeleri kontrol et
-        state.upgrades.forEach(u => {
-            document.getElementById(u.id).disabled = state.money < u.cost;
-        });
-        
-        localStorage.setItem('tycoonSave', JSON.stringify(state));
+    function playSound(type) {
+      if(type === 'click') document.getElementById('clickSound').play();
+      if(type === 'exit') document.getElementById('exitSound').play();
     }
 
-    function buyUpgrade(id) {
-        let u = state.upgrades.find(x => x.id === id);
-        if (state.money >= u.cost) {
-            state.money -= u.cost;
-            u.count++;
-            u.cost = Math.floor(u.cost * 1.5);
-            state.eps += u.income;
-            renderShop();
-        }
+    function startGame() {
+      playSound('click');
+      menu.style.display = 'none';
+      game.style.display = 'block';
+      score = 0;
+      updateScore();
+      draw();
     }
 
-    function renderShop() {
-        shopEl.innerHTML = '';
-        state.upgrades.forEach(u => {
-            let btn = document.createElement('button');
-            btn.className = 'upgrade';
-            btn.id = u.id;
-            btn.innerHTML = `${u.name} (${u.cost} TL) <br> <small>Sahip: ${u.count}</small>`;
-            btn.onclick = () => buyUpgrade(u.id);
-            shopEl.appendChild(btn);
-        });
+    function endGame() {
+      playSound('exit');
+      game.style.display = 'none';
+      menu.style.display = 'block';
     }
 
-    document.getElementById('kebab-btn').onclick = () => {
-        state.money += state.clickValue;
-        moneyEl.innerText = Math.floor(state.money);
-    };
-
-    function toggleMusic() {
-        music.paused ? music.play() : music.pause();
+    function updateScore() {
+      document.getElementById('score').innerText = "Skor: " + score;
     }
 
-    // Yükleme
-    const saved = localStorage.getItem('tycoonSave');
-    if (saved) {
-        state = JSON.parse(saved);
-        state.upgrades.forEach(u => state.eps += (u.count * u.income));
+    function draw() {
+      ctx.clearRect(0,0,400,400);
+      ctx.fillStyle = "#00ff88";
+      ctx.fillRect(Math.random()*350, Math.random()*350, 50, 50);
+      score++;
+      updateScore();
+      requestAnimationFrame(draw);
     }
-
-    renderShop();
-    setInterval(update, 100);
-</script>
+  </script>
 </body>
 </html>
-
