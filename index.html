@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kebapçı Tycoon: Cyber Edition</title>
+    <title>Kebapçı Tycoon</title>
     <style>
         body { 
             background: #0f0f0f; font-family: 'Arial Black', sans-serif; 
@@ -39,20 +39,52 @@
     </div>
 
     <script>
-        let money = 0, kebabs = 0, workerCost = 50;
-        function cookKebab() {
-            kebabs++; money += 10;
+        let money = 0;
+        let kebabs = 0;
+        let workerCost = 50;
+
+        window.onload = () => {
+            money = parseInt(localStorage.getItem('money')) || 0;
+            kebabs = parseInt(localStorage.getItem('kebabs')) || 0;
+            workerCost = parseInt(localStorage.getItem('workerCost')) || 50;
+            updateUI();
+            
+            // Eğer usta varsa otomatik çalıştırmayı başlat
+            if (localStorage.getItem('hasWorker') === 'true') {
+                setInterval(cookKebab, 1500);
+            }
+        };
+
+        function saveGame() {
+            localStorage.setItem('money', money);
+            localStorage.setItem('kebabs', kebabs);
+            localStorage.setItem('workerCost', workerCost);
+        }
+
+        function updateUI() {
             document.getElementById('money').innerText = "Para: " + money + " TL";
             document.getElementById('kebabs').innerText = "Kebap: " + kebabs;
+            document.querySelector('.hire').innerText = "Usta (" + workerCost + " TL)";
         }
+
+        function cookKebab() {
+            kebabs++; 
+            money += 10;
+            updateUI();
+            saveGame();
+        }
+
         function hireWorker() {
             if (money >= workerCost) {
                 money -= workerCost;
-                setInterval(cookKebab, 1500); // Hızlandırdık
+                localStorage.setItem('hasWorker', 'true');
+                setInterval(cookKebab, 1500);
                 workerCost += 50;
-                document.querySelector('.hire').innerText = "Usta (" + workerCost + " TL)";
-                document.getElementById('money').innerText = "Para: " + money + " TL";
-            } else { alert("Yetersiz bakiye!"); }
+                updateUI();
+                saveGame();
+            } else {
+                alert("Yetersiz bakiye!");
+            }
         }
     </script>
 </body>
