@@ -7,24 +7,25 @@
     <style>
         body { 
             background: #0f0f0f; font-family: 'Arial Black', sans-serif; 
-            text-align: center; color: #fff; margin: 0; height: 100vh;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; color: #fff; margin: 0; padding: 20px;
         }
         .container { 
-            background: #1a1a1a; padding: 40px; border-radius: 30px; 
+            background: #1a1a1a; padding: 30px; border-radius: 30px; 
             border: 2px solid #ff4500; box-shadow: 0 0 30px rgba(255, 69, 0, 0.4);
-            max-width: 350px; width: 90%;
+            max-width: 400px; margin: auto;
         }
-        h1 { color: #ff4500; text-shadow: 0 0 10px #ff4500; }
-        .stats { font-size: 24px; margin: 20px 0; }
+        h1 { color: #ff4500; text-shadow: 0 0 10px #ff4500; font-size: 24px; }
+        .stats { font-size: 20px; margin: 20px 0; }
         button { 
-            width: 100%; padding: 20px; font-size: 20px; margin: 10px 0; 
-            cursor: pointer; border: none; border-radius: 15px; font-weight: bold;
+            width: 100%; padding: 15px; font-size: 16px; margin: 5px 0; 
+            cursor: pointer; border: none; border-radius: 10px; font-weight: bold;
             transition: 0.1s; text-transform: uppercase;
         }
-        .cook { background: #ff4500; color: white; box-shadow: 0 5px #a02c00; }
-        .cook:active { transform: scale(0.95); }
-        .hire { background: #00ff41; color: #000; box-shadow: 0 5px #008f24; }
+        .cook { background: #ff4500; color: white; }
+        .upgrade { background: #3498db; color: white; }
+        .passive { background: #9b59b6; color: white; }
+        .hire { background: #00ff41; color: #000; }
+        button:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -32,46 +33,73 @@
         <h1>KEBAPÇI TYCOON</h1>
         <div class="stats">
             <div id="money">Para: 0 TL</div>
-            <div id="kebabs" style="font-size: 16px; color: #888;">Kebap: 0</div>
+            <div id="kebabs" style="font-size: 14px; color: #888;">Kebap: 0</div>
+            <div id="status" style="font-size: 12px; color: #ff4500;"></div>
         </div>
         <button class="cook" onclick="cookKebab()">ÇEVİR 🍢</button>
+        <button class="upgrade" onclick="buyMachine()">Zırhlı Makine (100 TL)</button>
+        <button class="passive" onclick="buyFridge()">Ayran Dolabı (200 TL)</button>
         <button class="hire" onclick="hireWorker()">Usta (50 TL)</button>
     </div>
 
     <script>
-        let money = 0;
-        let kebabs = 0;
-        let workerCost = 50;
+        let money = 0, kebabs = 0, workerCost = 50, kebabValue = 10, passiveIncome = 0;
 
         window.onload = () => {
             money = parseInt(localStorage.getItem('money')) || 0;
             kebabs = parseInt(localStorage.getItem('kebabs')) || 0;
             workerCost = parseInt(localStorage.getItem('workerCost')) || 50;
-            updateUI();
+            kebabValue = parseInt(localStorage.getItem('kebabValue')) || 10;
+            passiveIncome = parseInt(localStorage.getItem('passiveIncome')) || 0;
             
-            // Eğer usta varsa otomatik çalıştırmayı başlat
-            if (localStorage.getItem('hasWorker') === 'true') {
-                setInterval(cookKebab, 1500);
-            }
+            updateUI();
+            if (localStorage.getItem('hasWorker') === 'true') setInterval(cookKebab, 1500);
+            if (passiveIncome > 0) setInterval(addPassiveIncome, 1000);
         };
 
         function saveGame() {
             localStorage.setItem('money', money);
             localStorage.setItem('kebabs', kebabs);
             localStorage.setItem('workerCost', workerCost);
+            localStorage.setItem('kebabValue', kebabValue);
+            localStorage.setItem('passiveIncome', passiveIncome);
         }
 
         function updateUI() {
             document.getElementById('money').innerText = "Para: " + money + " TL";
             document.getElementById('kebabs').innerText = "Kebap: " + kebabs;
-            document.querySelector('.hire').innerText = "Usta (" + workerCost + " TL)";
         }
 
         function cookKebab() {
             kebabs++; 
-            money += 10;
+            money += kebabValue;
             updateUI();
             saveGame();
+        }
+
+        function addPassiveIncome() {
+            money += passiveIncome;
+            updateUI();
+            saveGame();
+        }
+
+        function buyMachine() {
+            if (money >= 100) {
+                money -= 100;
+                kebabValue += 15;
+                updateUI();
+                saveGame();
+            } else alert("Yetersiz bakiye!");
+        }
+
+        function buyFridge() {
+            if (money >= 200) {
+                money -= 200;
+                if (passiveIncome === 0) setInterval(addPassiveIncome, 1000);
+                passiveIncome += 5;
+                updateUI();
+                saveGame();
+            } else alert("Yetersiz bakiye!");
         }
 
         function hireWorker() {
@@ -82,9 +110,7 @@
                 workerCost += 50;
                 updateUI();
                 saveGame();
-            } else {
-                alert("Yetersiz bakiye!");
-            }
+            } else alert("Yetersiz bakiye!");
         }
     </script>
 </body>
