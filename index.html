@@ -3,40 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kebapçı Tycoon</title>
+    <title>Kebapçı Tycoon: Cyber Edition</title>
     <style>
         body { 
-            background: linear-gradient(180deg, #2c3e50 0%, #000000 100%); 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            text-align: center; color: white; margin: 0; padding: 20px; 
-            min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+            background: #0f0f0f; font-family: 'Arial Black', sans-serif; 
+            text-align: center; color: #fff; margin: 0; height: 100vh;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
         .container { 
-            background: #1a1a1a; padding: 30px; border-radius: 20px; 
-            border: 2px solid #e67e22; box-shadow: 0 0 20px rgba(230, 126, 34, 0.5);
-            max-width: 400px; width: 100%;
+            background: #1a1a1a; padding: 40px; border-radius: 30px; 
+            border: 2px solid #ff4500; box-shadow: 0 0 30px rgba(255, 69, 0, 0.4);
+            max-width: 350px; width: 90%;
         }
-        h1 { color: #e67e22; margin-bottom: 20px; text-transform: uppercase; }
-        .stats { background: #333; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        h1 { color: #ff4500; text-shadow: 0 0 10px #ff4500; }
+        .stats { font-size: 24px; margin: 20px 0; }
         button { 
-            width: 100%; padding: 20px; font-size: 18px; margin: 10px 0; 
-            cursor: pointer; border: none; border-radius: 10px; font-weight: bold;
-            transition: all 0.2s ease;
+            width: 100%; padding: 20px; font-size: 20px; margin: 10px 0; 
+            cursor: pointer; border: none; border-radius: 15px; font-weight: bold;
+            transition: 0.1s; text-transform: uppercase;
         }
-        .cook { background: #e67e22; color: white; }
-        .cook:active { transform: scale(0.95); background: #d35400; }
-        .hire { background: #27ae60; color: white; }
+        .cook { background: #ff4500; color: white; box-shadow: 0 5px #a02c00; }
+        .cook:active { transform: scale(0.95); }
+        .hire { background: #00ff41; color: #000; box-shadow: 0 5px #008f24; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Kebapçı Tycoon</h1>
+        <h1>KEBAPÇI TYCOON</h1>
         <div class="stats">
-            <h2 id="money">Para: 0 TL</h2>
-            <p id="kebabs">Toplam Kebap: 0</p>
+            <div id="money">Para: 0 TL</div>
+            <div id="kebabs" style="font-size: 16px; color: #888;">Kebap: 0</div>
         </div>
-        <button class="cook" onclick="cookKebab()">Kebap Çevir 🍢</button>
-        <button class="hire" onclick="hireWorker()">Usta Tut (50 TL)</button>
+        <button class="cook" onclick="cookKebab()">ÇEVİR 🍢</button>
+        <button class="hire" onclick="hireWorker()">Usta (50 TL)</button>
     </div>
 
     <script>
@@ -44,16 +43,16 @@
         function cookKebab() {
             kebabs++; money += 10;
             document.getElementById('money').innerText = "Para: " + money + " TL";
-            document.getElementById('kebabs').innerText = "Toplam Kebap: " + kebabs;
+            document.getElementById('kebabs').innerText = "Kebap: " + kebabs;
         }
         function hireWorker() {
             if (money >= workerCost) {
                 money -= workerCost;
-                setInterval(cookKebab, 2000);
+                setInterval(cookKebab, 1500); // Hızlandırdık
                 workerCost += 50;
-                document.querySelector('.hire').innerText = "Usta Tut (" + workerCost + " TL)";
+                document.querySelector('.hire').innerText = "Usta (" + workerCost + " TL)";
                 document.getElementById('money').innerText = "Para: " + money + " TL";
-            } else { alert("Para yetmiyor kirve!"); }
+            } else { alert("Yetersiz bakiye!"); }
         }
     </script>
 </body>
