@@ -1,101 +1,22 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Web Oyun Demo</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      text-align: center;
-    }
-    #menu, #game {
-      display: none;
-    }
-    button {
-      padding: 15px 30px;
-      margin: 10px;
-      font-size: 18px;
-      border: none;
-      border-radius: 8px;
-      background: #00ff88;
-      color: #000;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    button:hover {
-      transform: scale(1.1);
-    }
-    #score {
-      font-size: 24px;
-      margin-top: 20px;
-    }
-    canvas {
-      background: #222;
-      display: block;
-      margin: 20px auto;
-      border: 2px solid #00ff88;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Frontier | Pro Engine</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div id="menu">
-    <h1>🚀 Web Oyun</h1>
-    <button onclick="startGame()">Başlat</button>
-    <button onclick="playSound('click')">Ayarlar</button>
-    <button onclick="playSound('exit')">Çıkış</button>
-  </div>
-
-  <div id="game">
-    <canvas id="canvas" width="400" height="400"></canvas>
-    <div id="score">Skor: 0</div>
-    <button onclick="endGame()">Menüye Dön</button>
-  </div>
-
-  <audio id="clickSound" src="click.mp3"></audio>
-  <audio id="exitSound" src="exit.mp3"></audio>
-
-  <script>
-    let score = 0;
-    const menu = document.getElementById('menu');
-    const game = document.getElementById('game');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-
-    function playSound(type) {
-      if(type === 'click') document.getElementById('clickSound').play();
-      if(type === 'exit') document.getElementById('exitSound').play();
-    }
-
-    function startGame() {
-      playSound('click');
-      menu.style.display = 'none';
-      game.style.display = 'block';
-      score = 0;
-      updateScore();
-      draw();
-    }
-
-    function endGame() {
-      playSound('exit');
-      game.style.display = 'none';
-      menu.style.display = 'block';
-    }
-
-    function updateScore() {
-      document.getElementById('score').innerText = "Skor: " + score;
-    }
-
-    function draw() {
-      ctx.clearRect(0,0,400,400);
-      ctx.fillStyle = "#00ff88";
-      ctx.fillRect(Math.random()*350, Math.random()*350, 50, 50);
-      score++;
-      updateScore();
-      requestAnimationFrame(draw);
-    }
-  </script>
+    <div id="game-container">
+        <div id="main-menu" class="overlay">
+            <h1>NEON FRONTIER</h1>
+            <button onclick="Game.start()" data-sfx="click">BAŞLAT</button>
+            <button onclick="Game.openSettings()" data-sfx="click">AYARLAR</button>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+    <script src="js/core/audio.js"></script>
+    <script src="js/core/engine.js"></script>
+    <script src="js/game.js"></script>
 </body>
 </html>
